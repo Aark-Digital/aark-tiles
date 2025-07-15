@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aark tiles Hash Verifier</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;700&display=swap"
+    />
+    <style>
+      html {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Geist", "Geist Sans", "Geist Mono", Arial, sans-serif;
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 16px;
+        background: #000;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px #0001;
+        color: #fff;
+      }
+      h1 {
+        font-size: 1.3em;
+        margin: 0 0 1em;
+        text-align: center;
+      }
+      label {
+        display: block;
+        margin-top: 1em;
+        font-weight: bold;
+      }
+      input,
+      textarea {
+        width: 100%;
+        padding: 8px;
+        margin-top: 4px;
+        box-sizing: border-box;
+      }
+      button {
+        margin-top: 1.5em;
+        width: 100%;
+        padding: 10px;
+        font-size: 1em;
+        background: black;
+        border: 2px solid white;
+        color: #fff;
+      }
+      .result {
+        margin-top: 1.5em;
+        font-weight: bold;
+      }
+      .match {
+        color: green;
+      }
+      .no-match {
+        color: red;
+      }
+      #visual-view {
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: center;
+        width: 100%;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      #visual-view .row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 6px;
+      }
+      #visual-view .row-container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 6px;
+      }
+      #visual-view .row-label {
+        min-width: 30px;
+        text-align: right;
+        margin-right: 12px;
+        font-weight: bold;
+        color: #C8B9FD;
+        font-size: 0.9em;
+      }
+      #visual-view .tile {
+        width: 28px;
+        height: 28px;
+        margin-right: 6px;
+        background: rgba(255, 255, 255, 0.35);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1em;
+        transition: background 0.2s;
+      }
+      #visual-view .tile.bomb {
+        background: #e74c3c;
+        color: #fff;
+        font-weight: bold;
+      }
+      #visual-view .tile.selected {
+        background: #C8B9FD;
+        color: #111;
+        font-weight: bold;
+      }
+      #visual-view .tile.selected.bomb {
+        background: #e74c3c;
+        border: 2px solid #c0392b;
+        font-size: 0.8em;
+      }
+      #toggle-view {
+        background: #181818;
+        border: 1px solid #333;
+        border-radius: 4px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 1em;
+        color: #fff;
+      }
+      #rows-config {
+        color: #fff;
+        background: #181818;
+      }
+      .main-container {
+        background: #FFFFFF0A;
+        border-radius: 12px;
+        padding: 28px 20px 24px 20px;
+        box-shadow: 0 2px 16px #0003;
+        max-width: 440px;
+        margin: 0 auto;
+        border: 2px solid #C8B9FD;
+      }
+      .result {
+        width: 100%;
+        margin: 1.5em 0 1em 0;
+        padding: 8px 0;
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.1em;
+        letter-spacing: 0.01em;
+        transition: background 0.2s, color 0.2s;
+        box-sizing: border-box;
+        min-height: 24px;
+      }
+      .result.match {
+        background: #C8B9FD;
+        color: #111;
+      }
+      .result.no-match {
+        background: #e74c3c;
+        color: #fff;
+      }
+      .links {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1em;
+      }
+      .links a {
+        color: #C8B9FD;
+        margin-right: 1em;
+        font-size: 0.8em;
+      }
+
+
+      .step-info {
+        text-align: center;
+        font-weight: bold;
+        color: #C8B9FD;
+        font-size: 1.1em;
+      }
+
+      .grid-display {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 200px;
+      }
+
+      .grid-cell {
+        aspect-ratio: 1;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8em;
+        transition: all 0.3s ease;
+        min-width: 20px;
+        min-height: 20px;
+      }
+
+      .grid-cell.bomb-highlight {
+        background: #e74c3c;
+        border-color: #c0392b;
+        color: white;
+        font-weight: bold;
+        animation: pulse 1.5s infinite;
+      }
+
+      .grid-cell.selected-highlight {
+        background: #C8B9FD;
+        border-color: #8bc34a;
+        color: #111;
+        font-weight: bold;
+      }
+
+      .grid-cell.bomb-highlight.selected-highlight {
+        background: #e74c3c;
+        border: 2px solid #C8B9FD;
+        color: white;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+
+      .nav-controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .nav-btn {
+        background: #181818;
+        border: 1px solid #333;
+        border-radius: 6px;
+        padding: 8px 16px;
+        color: #fff;
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: all 0.2s ease;
+        margin-top: 0;
+      }
+
+      .nav-btn:hover:not(:disabled) {
+        background: #333;
+        border-color: #555;
+      }
+
+      .nav-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      /* Game selector styles */
+      .game-selector-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 16px 0;
+        padding: 12px 0;
+        border-top: 1px solid #333;
+        border-bottom: 1px solid #333;
+      }
+
+      .game-selector-container label {
+        font-size: 0.9em;
+        font-weight: bold;
+        color: #C8B9FD;
+        margin: 0;
+      }
+
+      #game-selector {
+        background: #181818;
+        border: 1px solid #333;
+        border-radius: 4px;
+        padding: 4px 8px;
+        color: #fff;
+        font-size: 0.9em;
+        cursor: pointer;
+      }
+
+      #game-selector:focus {
+        outline: none;
+        border-color: #C8B9FD;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main-container">
+      <h1 id="page-title">Hash Verifier</h1>
+      <p style="font-size: 0.9em">
+        This tool verifies the hash of your game to prove bomb tiles were were
+        chosen before the game began.
+      </p>
+      
+      <hr />
+      <div class="game-selector-container">
+        <label for="game-selector">Game</label>
+        <select id="game-selector">
+          <option value="aarkTiles">Aark tiles</option>
+        </select>
+      </div>
+      <form id="verifier-form">
+        <div id="dynamic-form-fields">
+          <!-- Form fields will be dynamically generated here -->
+        </div>
+        <button type="submit">Verify</button>
+      </form>
+      <div class="result" id="result"></div>
+      <div>
+        <div id="visual-view"></div>
+        <pre
+          id="rows-config"
+          style="
+            display: none;
+            margin-top: 1em;
+            background: #120E22;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.95em;
+            overflow-x: auto;
+          "
+        ></pre>
+        <button type="button" id="toggle-view" style="margin-bottom: 1em">
+          Show Raw JSON
+        </button>
+      </div>
+      <!-- Load shared utilities first -->
+      <script src="shared.js"></script>
+
+      <!-- Load game modules -->
+      <script src="aarkTiles.js"></script>
+
+      <!-- Load main orchestrator -->
+      <script src="main.js"></script>
+    </div>
+  </body>
+</html>
